@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#00000000"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/load_more"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#00000000">
+
+        <TextView
+            android:id="@+id/load_more_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:ellipsize="end"
+            android:maxWidth="200dp"
+            android:singleLine="true"
+            android:textColor="#666666"
+            android:textSize="12sp" />
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dp"
+            android:layout_toLeftOf="@id/load_more_text">
+
+            <ProgressBar
+                android:id="@+id/load_more_progress"
+                style="@android:style/Widget.ProgressBar.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
+
+            <ImageView
+                android:id="@+id/load_more_no_data_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/icon_no_more"
+                android:layout_gravity="center"
+                android:visibility="visible" />
+        </FrameLayout>
+    </RelativeLayout>
+</LinearLayout>

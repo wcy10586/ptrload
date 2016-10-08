@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">library</string>
+
+    <string name="more_loading">加载中</string>
+    <string name="no_more_data">已无更多内容啦</string>
+    <string name="data_load_success">加载成功</string>
+    <string name="data_load_tip">点击或上划加载更多</string>
+</resources>

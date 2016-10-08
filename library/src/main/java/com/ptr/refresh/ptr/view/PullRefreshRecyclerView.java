@@ -1,0 +1,395 @@
+package com.ptr.refresh.ptr.view;
+
+import android.content.Context;
+import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.RecyclerView;
+import android.util.AttributeSet;
+import android.view.View;
+import android.widget.FrameLayout;
+
+import com.ptr.refresh.R;
+import com.ptr.refresh.familiarrecyclerview.RecyclerViewUtils;
+import com.ptr.refresh.ptr.Constant;
+import com.ptr.refresh.ptr.DefaultLoadMoreUIHandler;
+import com.ptr.refresh.ptr.DefaultPullRefreshHeader;
+import com.ptr.refresh.ptr.ILoadMoreContainer;
+import com.ptr.refresh.ptr.ILoadMoreUIHandler;
+import com.ptr.refresh.ptr.IPrepareUIHandler;
+import com.ptr.refresh.ptr.OnLoadMoreListener;
+import com.ptr.refresh.ptr.OnRefreshListener;
+import com.ptr.refresh.ptr.PtrLoadMoreLayout;
+
+import in.srain.cube.views.ptr.PtrFrameLayout;
+import in.srain.cube.views.ptr.PtrHandler;
+import in.srain.cube.views.ptr.PtrUIHandler;
+
+/**
+ * Created by wuchangyou on 2016/9/13.
+ */
+public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreContainer, IPrepareUIHandler,
+        PtrHandler, FooterRecyclerView.OnScrolledListener, FooterRecyclerView.OnAdapterSetListener {
+
+    private DefaultPullRefreshHeader header;
+
+    private PtrLoadMoreLayout ptrLayout;
+    private FooterRecyclerView recyclerView;
+
+
+    private ILoadMoreUIHandler uiHandler;
+    private View loadMoreView;
+    private FrameLayout emptyContainer;
+
+    private OnRefreshListener onRefreshListener;
+
+
+    private int footerType = Constant.LOAD_SHOW_BY_CONTENT;
+
+    private boolean loadMoreEnable = true;
+    private boolean footerShow;
+//    private boolean registered;
+
+    private boolean statePrepare;
+
+    private RecyclerView.Adapter adapter;
+
+    public PullRefreshRecyclerView(Context context) {
+        super(context);
+        init();
+    }
+
+    public PullRefreshRecyclerView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
+    public PullRefreshRecyclerView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        inflate(getContext(), R.layout.pull_refresh_recyclerview, this);
+        loadMoreView = new DefaultLoadMoreUIHandler(getContext());
+        uiHandler = (ILoadMoreUIHandler) loadMoreView;
+
+        header = new DefaultPullRefreshHeader(getContext());
+        ptrLayout = (PtrLoadMoreLayout) findViewById(R.id.ptr);
+
+        recyclerView = (FooterRecyclerView) findViewById(R.id.rv_footer_recycler_view);
+        recyclerView.setFooter(loadMoreView);
+        recyclerView.setOnScrolledListener(this);
+        recyclerView.setOnAdapterSetListener(this);
+
+        ptrLayout.setHeaderView(header);
+        ptrLayout.addPtrUIHandler((PtrUIHandler) header);
+        ptrLayout.setPtrHandler(this);
+        ptrLayout.setLoadMoreUiHandler((ILoadMoreUIHandler) loadMoreView);
+        ptrLayout.setPrepareUIHandler(this);
+        ptrLayout.setScrollableView(recyclerView);
+
+        emptyContainer = (FrameLayout) findViewById(R.id.empty_container);
+        emptyContainer.setVisibility(GONE);
+    }
+
+    @Override
+    public boolean checkCanDoRefresh(PtrFrameLayout ptrFrameLayout, View view, View view1) {
+        return !ViewCompat.canScrollVertically(recyclerView, -1);
+    }
+
+    @Override
+    public void onRefreshBegin(PtrFrameLayout ptrFrameLayout) {
+        if (onRefreshListener != null) {
+            onRefreshListener.onRefresh();
+        }
+    }
+
+    @Override
+    public void setLoadMoreView(View view) {
+        recyclerView.setFooter(view);
+        checkFooterHideOrShow();
+    }
+
+
+    public void setHeaderView(View header) {
+        ptrLayout.setHeaderView(header);
+    }
+
+    @Override
+    public void setLoadMoreUIHandler(ILoadMoreUIHandler loadMoreUIHandler) {
+        uiHandler = loadMoreUIHandler;
+        ptrLayout.setLoadMoreUiHandler(uiHandler);
+    }
+
+    @Override
+    public void setOnLoadMoreListener(OnLoadMoreListener listener) {
+        ptrLayout.setOnLoadMoreListener(listener);
+    }
+
+    public void setOnRefreshListener(OnRefreshListener listener) {
+        onRefreshListener = listener;
+    }
+
+    @Override
+    public boolean onPrepare() {
+        //在最后一个item显示的时候即为prepare
+        return RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView) >= recyclerView.getAdapter().getItemCount() - 2;
+    }
+
+    public void setHasMore(boolean hasMore) {
+        if (uiHandler != null) {
+            uiHandler.setHasMore(hasMore);
+        }
+    }
+
+    @Override
+    public void onLoadMoreCompleted(boolean success, boolean hasMore) {
+        if (uiHandler != null) {
+            uiHandler.onLoadFinish(success, hasMore);
+        }
+        ptrLayout.loadComplete();
+    }
+
+    public void refreshComplete() {
+        ptrLayout.refreshComplete();
+    }
+
+
+    public DefaultPullRefreshHeader getHeader() {
+        return header;
+    }
+
+    public void setDefaultHeaderLastUpdateTimeKey(String key) {
+        if (this.header != null) {
+            this.header.setLastUpdateTimeKey(key);
+        }
+
+    }
+
+    public void setDefaultHeaderLastUpdateTimeRelateObject(Object object) {
+        if (this.header != null) {
+            this.header.setLastUpdateTimeRelateObject(object);
+        }
+
+    }
+
+    public PtrLoadMoreLayout getPtrLayout() {
+        return ptrLayout;
+    }
+
+    public void setLoadMoreType(int loadType) {
+        footerType = loadType;
+        checkFooterHideOrShow();
+    }
+
+    public void setLoadMoreStyle(int style) {
+        ptrLayout.setLoadMoreStyle(style);
+    }
+
+    public void setLoadMoreEnable(boolean enable) {
+        loadMoreEnable = enable;
+        ptrLayout.setLoadMoreEnable(enable);
+        if (enable) {
+            checkShowFooter();
+        } else {
+            checkHideFooter();
+        }
+    }
+
+    public void setEmptyView(View view) {
+        emptyContainer.removeAllViews();
+        if (view != null) {
+            emptyContainer.addView(view);
+        }
+    }
+
+    public void showEmptyView() {
+        emptyContainer.setVisibility(VISIBLE);
+    }
+
+    public void hideEmptyView() {
+        emptyContainer.setVisibility(GONE);
+    }
+
+    public void setRefreshEnable(boolean enable) {
+        ptrLayout.setCanPullToRefresh(enable);
+    }
+
+    public FooterRecyclerView getRecyclerView() {
+        return recyclerView;
+    }
+
+    @Override
+    public void onAdapterSet(RecyclerView.Adapter adapter) {
+        //如果是根据内容来显示或隐藏footer那么需要在数据集变化的时候判断是否需要隐藏footer
+        // 而footer的显示则在数据滚动的时候来判断
+
+        if (adapter != null && this.adapter != adapter) {
+            if (this.adapter != null) {
+                this.adapter.unregisterAdapterDataObserver(observer);
+            }
+            this.adapter = adapter;
+            this.adapter.registerAdapterDataObserver(observer);
+        }
+    }
+
+    @Override
+    public void onScrolled(int dx, int dy) {
+        checkShowFooter();
+        checkFooterState();
+
+    }
+
+    private void checkShowFooter() {
+        if (Constant.LOAD_SHOW_ALWAYS == footerType) {
+            if (!footerShow) {
+                recyclerView.showFooter();
+                footerShow = true;
+            }
+        } else if (Constant.LOAD_SHOW_HIDE_ALWAYS == footerType) {
+            if (footerShow) {
+                recyclerView.hideFooter();
+                footerShow = false;
+            }
+        } else {
+            if (!footerShow) {
+                int visibleItemCount = RecyclerViewUtils.getCompletelyVisibleItemCount(recyclerView);
+                int itemCount = recyclerView.getAdapter().getItemCount();
+                if (itemCount > 0 && visibleItemCount > 0 && visibleItemCount < itemCount) {
+                    recyclerView.showFooter();
+                    footerShow = true;
+                }
+            }
+        }
+
+    }
+
+    private void checkHideFooter() {
+        if (Constant.LOAD_SHOW_ALWAYS == footerType) {
+            if (!footerShow) {
+                recyclerView.showFooter();
+                footerShow = true;
+            }
+        } else if (Constant.LOAD_SHOW_HIDE_ALWAYS == footerType) {
+            if (footerShow) {
+                recyclerView.hideFooter();
+                footerShow = false;
+            }
+        } else {
+            if (footerShow) {
+                int visibleItemCount = RecyclerViewUtils.getCompletelyVisibleItemCount(recyclerView);
+                int itemCount = recyclerView.getAdapter().getItemCount();
+                int lp = RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView);
+                if (visibleItemCount == 0 || visibleItemCount >= itemCount || lp == itemCount - 2) {
+                    recyclerView.hideFooter();
+                    footerShow = false;
+                }
+            }
+        }
+    }
+
+
+    private void checkFooterHideOrShow() {
+        if (Constant.LOAD_SHOW_ALWAYS == footerType) {
+            if (!footerShow) {
+                recyclerView.showFooter();
+                footerShow = true;
+            }
+        } else if (Constant.LOAD_SHOW_HIDE_ALWAYS == footerType) {
+            if (footerShow) {
+                recyclerView.hideFooter();
+                footerShow = false;
+            }
+        } else {
+            if (footerShow) {
+                int visibleItemCount = RecyclerViewUtils.getCompletelyVisibleItemCount(recyclerView);
+                int itemCount = recyclerView.getAdapter().getItemCount();
+                int lp = RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView);
+                if (visibleItemCount == 0 || visibleItemCount >= itemCount || lp == itemCount - 2) {
+                    recyclerView.hideFooter();
+                    footerShow = false;
+                }
+            } else {
+                int visibleItemCount = RecyclerViewUtils.getCompletelyVisibleItemCount(recyclerView);
+                int itemCount = recyclerView.getAdapter().getItemCount();
+                if (itemCount > 0 && visibleItemCount > 0 && visibleItemCount < itemCount ) {
+                    recyclerView.showFooter();
+                    footerShow = true;
+                }
+
+            }
+        }
+    }
+
+    private void checkFooterState() {
+        if (uiHandler.hasMore() && !statePrepare && onPrepare()) {
+            ptrLayout.setOnPrepare();
+            statePrepare = true;
+        }
+
+    }
+
+    @Override
+    public void onScrollStateChanged(int state) {
+        if (state == RecyclerView.SCROLL_STATE_IDLE || statePrepare) {
+            boolean toBottom = RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView) == recyclerView.getAdapter().getItemCount() - 1;
+            if (loadMoreEnable && toBottom) {
+                ptrLayout.setLoadMore();
+                statePrepare = false;
+            }
+        }
+    }
+
+    //用于监听数据集变化时候是否显示footer
+    private RecyclerView.AdapterDataObserver observer = new RecyclerView.AdapterDataObserver() {
+        @Override
+        public void onChanged() {
+            checkHideFooter();
+            checkShowEmptyView();
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount) {
+            checkHideFooter();
+            checkShowEmptyView();
+        }
+
+        @Override
+        public void onItemRangeInserted(int positionStart, int itemCount) {
+            checkHideFooter();
+            checkShowEmptyView();
+        }
+
+        @Override
+        public void onItemRangeRemoved(int positionStart, int itemCount) {
+            checkHideFooter();
+            checkShowEmptyView();
+        }
+
+        @Override
+        public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
+            checkHideFooter();
+            checkShowEmptyView();
+        }
+    };
+
+    private void checkShowEmptyView() {
+        if (emptyContainer.getChildCount() < 1) {
+            return;
+        }
+        if (footerShow && recyclerView.getAdapter().getItemCount() == 1) {
+            showEmptyView();
+        } else if (!footerShow && recyclerView.getAdapter().getItemCount() == 0) {
+            showEmptyView();
+        } else {
+            hideEmptyView();
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (adapter != null) {
+            adapter.unregisterAdapterDataObserver(observer);
+        }
+    }
+}

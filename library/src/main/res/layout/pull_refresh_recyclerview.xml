@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <com.ptr.refresh.ptr.PtrLoadMoreLayout
+        android:id="@+id/ptr"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.ptr.refresh.ptr.view.FooterRecyclerView
+                android:id="@+id/rv_footer_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:overScrollMode="never"></com.ptr.refresh.ptr.view.FooterRecyclerView>
+
+            <FrameLayout
+                android:id="@+id/empty_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
+    </com.ptr.refresh.ptr.PtrLoadMoreLayout>
+
+
+</merge>
