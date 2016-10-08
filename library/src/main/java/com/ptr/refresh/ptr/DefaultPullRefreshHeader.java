@@ -127,7 +127,7 @@ public class DefaultPullRefreshHeader extends FrameLayout implements PtrUIHandle
         if (frame.isPullToRefresh()) {
             this.mTitleTextView.setText(this.getResources().getString(R.string.cube_ptr_pull_down_to_refresh));
         } else {
-            this.mTitleTextView.setText(this.getResources().getString(R.string.cube_ptr_pull_down));
+            this.mTitleTextView.setText(this.getResources().getString(R.string.cube_ptr_pull_down_to_refresh));
         }
 
     }

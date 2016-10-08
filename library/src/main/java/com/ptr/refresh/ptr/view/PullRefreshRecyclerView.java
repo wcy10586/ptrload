@@ -20,6 +20,7 @@ import com.ptr.refresh.ptr.OnLoadMoreListener;
 import com.ptr.refresh.ptr.OnRefreshListener;
 import com.ptr.refresh.ptr.PtrLoadMoreLayout;
 
+import in.srain.cube.views.ptr.PtrClassicDefaultHeader;
 import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.PtrHandler;
 import in.srain.cube.views.ptr.PtrUIHandler;
@@ -30,7 +31,7 @@ import in.srain.cube.views.ptr.PtrUIHandler;
 public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreContainer, IPrepareUIHandler,
         PtrHandler, FooterRecyclerView.OnScrolledListener, FooterRecyclerView.OnAdapterSetListener {
 
-    private DefaultPullRefreshHeader header;
+    private View header;
 
     private PtrLoadMoreLayout ptrLayout;
     private FooterRecyclerView recyclerView;
@@ -85,6 +86,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
         ptrLayout.setPrepareUIHandler(this);
         ptrLayout.setScrollableView(recyclerView);
 
+
         emptyContainer = (FrameLayout) findViewById(R.id.empty_container);
         emptyContainer.setVisibility(GONE);
     }
@@ -101,14 +103,24 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
         }
     }
 
+
+    public View getLoadMoreView() {
+        return loadMoreView;
+    }
+
     @Override
     public void setLoadMoreView(View view) {
+        loadMoreView = view;
         recyclerView.setFooter(view);
         checkFooterHideOrShow();
     }
 
+    public View getHeader() {
+        return header;
+    }
 
     public void setHeaderView(View header) {
+        this.header = header;
         ptrLayout.setHeaderView(header);
     }
 
@@ -153,21 +165,18 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
         ptrLayout.refreshComplete();
     }
 
-
-    public DefaultPullRefreshHeader getHeader() {
-        return header;
-    }
-
     public void setDefaultHeaderLastUpdateTimeKey(String key) {
-        if (this.header != null) {
-            this.header.setLastUpdateTimeKey(key);
+        if (this.header != null && header instanceof DefaultLoadMoreUIHandler) {
+            DefaultPullRefreshHeader header = (DefaultPullRefreshHeader) this.header;
+            header.setLastUpdateTimeKey(key);
         }
 
     }
 
     public void setDefaultHeaderLastUpdateTimeRelateObject(Object object) {
-        if (this.header != null) {
-            this.header.setLastUpdateTimeRelateObject(object);
+        if (this.header != null && header instanceof DefaultLoadMoreUIHandler) {
+            DefaultPullRefreshHeader header = (DefaultPullRefreshHeader) this.header;
+            header.setLastUpdateTimeRelateObject(object);
         }
 
     }
