@@ -20,7 +20,7 @@
         recyclerView.setAdapter(adapter);
         pullRefreshRecyclerView.setLoadMoreType(Constant.LOAD_SHOW_BY_CONTENT);
 
-//      pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_NORMAL);
+        pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_OVER);//默认是LOAD_STYLE_NORMAL
 
         pullRefreshRecyclerView.setOnRefreshListener(new OnRefreshListener() {
             @Override
