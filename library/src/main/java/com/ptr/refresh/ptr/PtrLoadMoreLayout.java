@@ -3,6 +3,7 @@ package com.ptr.refresh.ptr;
 import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -15,7 +16,7 @@ import in.srain.cube.views.ptr.indicator.PtrIndicator;
 /**
  * Created by wuchangyou on 2016/9/13.
  */
-public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickListener{
+public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickListener {
     private ILoadMoreUIHandler uiHandler;
     private IPrepareUIHandler prepareUIHandler;
     private OnLoadMoreListener loadMoreListener;
@@ -38,7 +39,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
 
     private boolean shouldSetScrollerStart;
 
-    private float downY;
     private float oldY;
     private int dealtY;
     private Scroller mScroller;
@@ -47,6 +47,13 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
     private boolean isMoving;
 
     private View scrollableView;
+
+    private static final int LOAD_STATUS_NORMAL = 1;
+    private static final int LOAD_STATUS_WAITING = 2;
+    private static final int LOAD_STATUS_PREPARE = 3;
+    private static final int LOAD_STATUS_LOADING = 4;
+
+    private int loadStatus = LOAD_STATUS_NORMAL;
 
     public PtrLoadMoreLayout(Context context) {
         super(context);
@@ -71,7 +78,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-
         int action = ev.getAction() & MotionEvent.ACTION_MASK;
         switch (action) {
             case MotionEvent.ACTION_POINTER_DOWN:
@@ -80,7 +86,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
                 break;
             case MotionEvent.ACTION_DOWN:
                 isMoving = false;
-                downY = ev.getY();
                 oldY = 0;
                 dealtY = mScroller.getCurrY();
                 if (dealtY != 0) {
@@ -126,10 +131,18 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
                     if (!isOverScrollBottom && tempOverScrollBottom) {
                         if (canLoadMore()) {
                             if (loadMoreStyle == Constant.LOAD_STYLE_NORMAL) {
-                                loadMore();
+                                if (loadStatus == LOAD_STATUS_NORMAL){
+                                    loadStatus = LOAD_STATUS_PREPARE;
+                                    uiHandler.onPrePareLoadMore();
+                                }else if (loadStatus == LOAD_STATUS_PREPARE) {
+                                    loadMore();
+                                }
                                 return super.dispatchTouchEvent(ev);
                             } else {
-                                uiHandler.onWaitToLoadMore();
+                                if (loadStatus == LOAD_STATUS_PREPARE) {
+                                    loadStatus = LOAD_STATUS_WAITING;
+                                    uiHandler.onWaitToLoadMore();
+                                }
                             }
                         }
                         oldY = ev.getY();
@@ -141,7 +154,8 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
                     isOverScrollBottom = tempOverScrollBottom;
                     oldY = ev.getY();
                 }
-                if (canLoadMore() && prepareUIHandler != null && prepareUIHandler.onPrepare()) {
+                if (canLoadMore()  && prepareUIHandler.onPrepare() && loadStatus == LOAD_STATUS_NORMAL) {
+                    loadStatus = LOAD_STATUS_PREPARE;
                     uiHandler.onPrePareLoadMore();
                 }
                 break;
@@ -185,7 +199,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
                 return;
             }
             if (finishOverScroll) {
-                if (isOverScrollBottom && uiHandler != null && canLoadMore()) {
+                if (isOverScrollBottom && uiHandler != null && canLoadMore() && loadStatus == LOAD_STATUS_WAITING) {
                     loadMore();
                 }
                 finishOverScroll = false;
@@ -196,6 +210,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
 
     private void loadMore() {
         if (loadMoreListener != null) {
+            loadStatus = LOAD_STATUS_LOADING;
             isLoading = true;
             uiHandler.onLoading();
             loadMoreListener.onLoadMore();
@@ -223,6 +238,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
             mStatus = NORMAL;
         }
     }
+
     private boolean isBottomOverScroll(float currentY) {
         if (isOverScrollBottom) {
             return true;
@@ -245,6 +261,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
     }
 
     public void loadComplete() {
+        loadStatus = LOAD_STATUS_NORMAL;
         isLoading = false;
         super.setCanPullToRefresh(true && canPullToRefresh);
     }
@@ -301,7 +318,8 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
     }
 
     public void setOnPrepare() {
-        if (uiHandler != null && canLoadMore()) {
+        if (uiHandler != null && canLoadMore() && loadStatus == LOAD_STATUS_NORMAL) {
+            loadStatus = LOAD_STATUS_PREPARE;
             uiHandler.onPrePareLoadMore();
         }
     }
@@ -310,7 +328,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
         if (isMoving || loadMoreStyle == Constant.LOAD_STYLE_OVER) {
             return;
         }
-        if (uiHandler != null && canLoadMore()) {
+        if (uiHandler != null && canLoadMore() && loadStatus == LOAD_STATUS_PREPARE) {
             loadMore();
         }
     }

@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
         pullRefreshRecyclerView.setLoadMoreType(Constant.LOAD_SHOW_BY_CONTENT);
 
+//        pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_NORMAL);
+
         pullRefreshRecyclerView.setOnRefreshListener(new OnRefreshListener() {
             @Override
             public void onRefresh() {

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -46,9 +47,6 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
 
     private boolean loadMoreEnable = true;
     private boolean footerShow;
-//    private boolean registered;
-
-    private boolean statePrepare;
 
     private RecyclerView.Adapter adapter;
 
@@ -132,6 +130,8 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     @Override
     public boolean onPrepare() {
         //在最后一个item显示的时候即为prepare
+        int a = RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView);
+        int b = recyclerView.getAdapter().getItemCount() - 2;
         return RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView) >= recyclerView.getAdapter().getItemCount() - 2;
     }
 
@@ -311,7 +311,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
             } else {
                 int visibleItemCount = RecyclerViewUtils.getCompletelyVisibleItemCount(recyclerView);
                 int itemCount = recyclerView.getAdapter().getItemCount();
-                if (itemCount > 0 && visibleItemCount > 0 && visibleItemCount < itemCount ) {
+                if (itemCount > 0 && visibleItemCount > 0 && visibleItemCount < itemCount) {
                     recyclerView.showFooter();
                     footerShow = true;
                 }
@@ -321,20 +321,18 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     }
 
     private void checkFooterState() {
-        if (uiHandler.hasMore() && !statePrepare && onPrepare()) {
+        if (uiHandler.hasMore() && onPrepare()) {
             ptrLayout.setOnPrepare();
-            statePrepare = true;
         }
 
     }
 
     @Override
     public void onScrollStateChanged(int state) {
-        if (state == RecyclerView.SCROLL_STATE_IDLE || statePrepare) {
+        if (state == RecyclerView.SCROLL_STATE_IDLE) {
             boolean toBottom = RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView) == recyclerView.getAdapter().getItemCount() - 1;
             if (loadMoreEnable && toBottom) {
                 ptrLayout.setLoadMore();
-                statePrepare = false;
             }
         }
     }
