@@ -9,7 +9,7 @@ import android.view.View;
 
 /**
  * Created by changyou on 2015/10/22.
- * <p>
+ * <p/>
  * RecyclerView设置Header/Footer所用到的工具类
  */
 public class RecyclerViewUtils {
@@ -212,7 +212,7 @@ public class RecyclerViewUtils {
         RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
         if (layoutManager instanceof GridLayoutManager) {
             return ((GridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
-        } else if (layoutManager.getClass().isAssignableFrom(LinearLayoutManager.class)) {
+        } else if (layoutManager instanceof LinearLayoutManager) {
             return ((LinearLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
         } else if (layoutManager instanceof StaggeredGridLayoutManager) {
             StaggeredGridLayoutManager mStaggeredGridLayoutManager = (StaggeredGridLayoutManager) layoutManager;
