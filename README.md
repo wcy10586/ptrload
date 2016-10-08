@@ -53,3 +53,6 @@
         在自定义Header时候可以参考 DefaultPullRefreshHeader；自定义footer时候可以参考 DefaultLoadMoreUIHandler；
         
          pullRefreshRecyclerView.setEmptyView(View view); 可以设置一个数据无数据状态的View,无数据的View会根据Adapter中数据的变化而自动显示或者隐藏。
+         
+         
+        
