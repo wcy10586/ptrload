@@ -39,15 +39,16 @@
         pullRefreshRecyclerView.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
-                pullRefreshRecyclerView.setRefreshEnable(false);
                 adapter.addItems(getDdata());
                 pageNum += 1;
 
                 pullRefreshRecyclerView.onLoadMoreCompleted(true,true);
-//                pullRefreshRecyclerView.setRefreshEnable(true);
             }
         });
         
+          pullRefreshRecyclerView.setRefreshEnable(false);//设置是否可以下拉刷新，默认是true
+           pullRefreshRecyclerView.setLoadMoreEnable(true);//设置是否可以加载更多，默认是true
+
         
         在自定义Header时候可以参考 DefaultPullRefreshHeader；自定义footer时候可以参考 DefaultLoadMoreUIHandler；
         
