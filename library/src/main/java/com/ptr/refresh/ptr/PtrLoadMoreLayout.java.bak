@@ -106,12 +106,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
                 if (uiHandler == null) {
                     return super.dispatchTouchEvent(ev);
                 }
-
-                if (canLoadMore()  && prepareUIHandler.onPrepare() && loadStatus == LOAD_STATUS_NORMAL) {
-                    loadStatus = LOAD_STATUS_PREPARE;
-                    uiHandler.onPrePareLoadMore();
-                }
-
                 if (isOverScrollBottom) {
                     if (shouldSetScrollerStart) {
                         shouldSetScrollerStart = false;
@@ -160,7 +154,10 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
                     isOverScrollBottom = tempOverScrollBottom;
                     oldY = ev.getY();
                 }
-               
+                if (canLoadMore()  && prepareUIHandler.onPrepare() && loadStatus == LOAD_STATUS_NORMAL) {
+                    loadStatus = LOAD_STATUS_PREPARE;
+                    uiHandler.onPrePareLoadMore();
+                }
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:

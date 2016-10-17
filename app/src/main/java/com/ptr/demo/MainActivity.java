@@ -34,13 +34,10 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView recyclerView = pullRefreshRecyclerView.getRecyclerView();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-
-
         adapter = new Adapter(this);
         adapter.setData(getDdata());
         recyclerView.setAdapter(adapter);
         pullRefreshRecyclerView.setLoadMoreType(Constant.LOAD_SHOW_BY_CONTENT);
-
 //        pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_NORMAL);
 
         pullRefreshRecyclerView.setOnRefreshListener(new OnRefreshListener() {
