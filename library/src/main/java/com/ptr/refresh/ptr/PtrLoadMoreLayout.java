@@ -3,39 +3,36 @@ package com.ptr.refresh.ptr;
 import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
-import android.widget.AbsListView;
 import android.widget.OverScroller;
 import android.widget.Scroller;
 
 import in.srain.cube.views.ptr.PtrFrameLayout;
+import in.srain.cube.views.ptr.PtrHandler;
 import in.srain.cube.views.ptr.indicator.PtrIndicator;
 
 /**
  * Created by wuchangyou on 2016/9/13.
  */
-public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickListener {
+public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, View.OnClickListener {
     private ILoadMoreUIHandler uiHandler;
     private IPrepareUIHandler prepareUIHandler;
     private OnLoadMoreListener loadMoreListener;
+    private OnRefreshListener onRefreshListener;
+
 
     private ViewConfiguration configuration;
 
-    private boolean loadMoreEnable = true;
+
     private boolean isLoading;
     private boolean canPullToRefresh = true;
-
-    private static final int NORMAL = 0;
-    private static final int TOP_OFFSET = 1;
-    private int mStatus = NORMAL;
-
-    private int currentPos;
+    private boolean canLoadMore = true;
+    private boolean loadMoreEnable = true;
 
     private int loadMoreStyle = Constant.LOAD_STYLE_NORMAL;
 
@@ -84,6 +81,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
     }
 
     private void init() {
+        setPtrHandler(this);
         configuration = ViewConfiguration.get(getContext());
         mScroller = new Scroller(getContext(), new OvershootInterpolator(0.75f));
         flingRunnable = new FlingRunnable();
@@ -128,9 +126,9 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
                 break;
             case MotionEvent.ACTION_MOVE:
                 isMoving = true;
-                if (isLoading || TOP_OFFSET == mStatus) {
-                    return super.dispatchTouchEvent(ev);
-                }
+//                if (isLoading || TOP_OFFSET == mStatus) {
+//                    return super.dispatchTouchEvent(ev);
+//                }
                 if (uiHandler == null) {
                     return super.dispatchTouchEvent(ev);
                 }
@@ -142,7 +140,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
 
 
                 if (isOverScrollTop || isOverScrollBottom) {
-
                     if (shouldSetScrollerStart) {
                         shouldSetScrollerStart = false;
                         mScroller.startScroll(0, dealtY, 0, 0);
@@ -220,9 +217,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
             case MotionEvent.ACTION_UP:
                 finishOverScroll = true;
                 mSmoothScrollTo(0, 0);
-                if (currentPos == 0) {
-                    mStatus = NORMAL;
-                }
                 isMoving = false;
                 break;
         }
@@ -243,7 +237,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
     private float getDealt(float dealt, float distance) {
         if (dealt * distance < 0)
             return dealt;
-        if (baseOverScrollLength == 0){
+        if (baseOverScrollLength == 0) {
             baseOverScrollLength = scrollableView.getMeasuredHeight();
         }
         //x 为0的时候 y 一直为0, 所以当x==0的时候,给一个0.1的最小值
@@ -278,18 +272,14 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
         }
     }
 
+
     private void loadMore() {
         if (loadMoreListener != null) {
+            super.setCanPullToRefresh(false);
             loadStatus = LOAD_STATUS_LOADING;
             isLoading = true;
             uiHandler.onLoading();
-            postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    loadMoreListener.onLoadMore();
-                }
-            },100);
-
+            loadMoreListener.onLoadMore();
         }
     }
 
@@ -305,18 +295,9 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
         invalidate();
     }
 
-    @Override
-    protected void onPositionChange(boolean isUnderTouch, byte status, PtrIndicator ptrIndicator) {
-        currentPos = ptrIndicator.getCurrentPosY();
-        if (currentPos > 0) {
-            mStatus = TOP_OFFSET;
-        } else if (currentPos == 0 && !isUnderTouch) {
-            mStatus = NORMAL;
-        }
-    }
 
     private boolean isTopOverScroll(float currentY) {
-        if (getHeaderView() != null && isCanPullToRefresh()) {
+        if (getHeaderView() != null && super.isCanPullToRefresh()) {
             return false;
         }
 
@@ -360,6 +341,25 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
         this.scrollableView = scrollableView;
     }
 
+    @Override
+    public boolean checkCanDoRefresh(PtrFrameLayout ptrFrameLayout, View view, View view1) {
+        return !ViewCompat.canScrollVertically(scrollableView, -1);
+    }
+
+    @Override
+    public void onRefreshBegin(PtrFrameLayout ptrFrameLayout) {
+        loadMoreEnable = false;
+        if (onRefreshListener != null) {
+            onRefreshListener.onRefresh();
+        }
+    }
+
+    @Override
+    public void refreshComplete() {
+        super.refreshComplete();
+        loadMoreEnable = true && canLoadMore;
+    }
+
     public void loadComplete() {
         loadStatus = LOAD_STATUS_NORMAL;
         isLoading = false;
@@ -379,12 +379,27 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
 
     @Override
     public void setCanPullToRefresh(boolean canPullToRefresh) {
-        super.setCanPullToRefresh(canPullToRefresh);
         this.canPullToRefresh = canPullToRefresh;
+        super.setCanPullToRefresh(canPullToRefresh && super.isCanPullToRefresh());
+
     }
 
-    public void setLoadMoreEnable(boolean enable) {
-        this.loadMoreEnable = enable;
+    @Override
+    public boolean isCanPullToRefresh() {
+        return canPullToRefresh;
+    }
+
+    public void setCanLoadMore(boolean canLoadMore) {
+        this.canLoadMore = canLoadMore;
+        this.loadMoreEnable = canLoadMore && loadMoreEnable;
+    }
+
+    public boolean isCanLoadMore() {
+        return canLoadMore;
+    }
+
+    public void setOnRefreshListener(OnRefreshListener listener) {
+        onRefreshListener = listener;
     }
 
     public void setOnLoadMoreListener(OnLoadMoreListener listener) {
@@ -406,7 +421,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements View.OnClickLis
     }
 
     private boolean canLoadMore() {
-        return uiHandler != null && uiHandler.hasMore() && loadMoreEnable && !isLoading;
+        return loadMoreEnable && uiHandler != null && uiHandler.hasMore() && !isLoading;
     }
 
 

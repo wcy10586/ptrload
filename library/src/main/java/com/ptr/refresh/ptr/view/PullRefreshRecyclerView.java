@@ -29,7 +29,7 @@ import in.srain.cube.views.ptr.PtrUIHandler;
  * Created by wuchangyou on 2016/9/13.
  */
 public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreContainer, IPrepareUIHandler,
-        PtrHandler, FooterRecyclerView.OnScrolledListener, FooterRecyclerView.OnAdapterSetListener {
+        FooterRecyclerView.OnScrolledListener, FooterRecyclerView.OnAdapterSetListener {
 
     private View header;
 
@@ -41,12 +41,8 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     private View loadMoreView;
     private FrameLayout emptyContainer;
 
-    private OnRefreshListener onRefreshListener;
-
 
     private int footerType = Constant.LOAD_SHOW_BY_CONTENT;
-
-    private boolean loadMoreEnable = true;
     private boolean footerShow;
 
     private RecyclerView.Adapter adapter;
@@ -81,7 +77,6 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
 
         ptrLayout.setHeaderView(header);
         ptrLayout.addPtrUIHandler((PtrUIHandler) header);
-        ptrLayout.setPtrHandler(this);
         ptrLayout.setLoadMoreUiHandler((ILoadMoreUIHandler) loadMoreView);
         ptrLayout.setPrepareUIHandler(this);
         ptrLayout.setScrollableView(recyclerView);
@@ -89,18 +84,6 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
 
         emptyContainer = (FrameLayout) findViewById(R.id.empty_container);
         emptyContainer.setVisibility(GONE);
-    }
-
-    @Override
-    public boolean checkCanDoRefresh(PtrFrameLayout ptrFrameLayout, View view, View view1) {
-        return !ViewCompat.canScrollVertically(recyclerView, -1);
-    }
-
-    @Override
-    public void onRefreshBegin(PtrFrameLayout ptrFrameLayout) {
-        if (onRefreshListener != null) {
-            onRefreshListener.onRefresh();
-        }
     }
 
 
@@ -136,7 +119,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     }
 
     public void setOnRefreshListener(OnRefreshListener listener) {
-        onRefreshListener = listener;
+        ptrLayout.setOnRefreshListener(listener);
     }
 
     @Override
@@ -166,7 +149,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     }
 
     public void setDefaultHeaderLastUpdateTimeKey(String key) {
-        if (this.header != null && header instanceof DefaultLoadMoreUIHandler) {
+        if (this.header != null && header instanceof DefaultPullRefreshHeader) {
             DefaultPullRefreshHeader header = (DefaultPullRefreshHeader) this.header;
             header.setLastUpdateTimeKey(key);
         }
@@ -194,14 +177,25 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
         ptrLayout.setLoadMoreStyle(style);
     }
 
-    public void setLoadMoreEnable(boolean enable) {
-        loadMoreEnable = enable;
-        ptrLayout.setLoadMoreEnable(enable);
-        if (enable) {
+    public void setCanLoadMore(boolean canLoadMore) {
+        ptrLayout.setCanLoadMore(canLoadMore);
+        if (canLoadMore) {
             checkShowFooter();
         } else {
             checkHideFooter();
         }
+    }
+
+    public boolean isCanLoadMore(){
+        return ptrLayout.isCanLoadMore();
+    }
+
+    public void setCanPullToRefresh(boolean canPullToRefresh) {
+       ptrLayout.setCanPullToRefresh(canPullToRefresh);
+    }
+
+    public boolean isCanPullToRefresh(){
+        return ptrLayout.isCanPullToRefresh();
     }
 
     public void setEmptyView(View view) {
@@ -340,7 +334,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     public void onScrollStateChanged(int state) {
         if (state == RecyclerView.SCROLL_STATE_IDLE) {
             boolean toBottom = RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView) == recyclerView.getAdapter().getItemCount() - 1;
-            if (loadMoreEnable && toBottom) {
+            if (toBottom) {
                 ptrLayout.setLoadMore();
             }
         }

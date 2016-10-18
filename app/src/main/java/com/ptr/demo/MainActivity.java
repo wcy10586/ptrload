@@ -34,21 +34,17 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         adapter = new Adapter(this);
-        adapter.setData(getDdata());
+        getDdata(true);
         recyclerView.setAdapter(adapter);
         pullRefreshRecyclerView.setLoadMoreType(Constant.LOAD_SHOW_BY_CONTENT);
-        pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_OVER);
+        pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_NORMAL);
 
         pullRefreshRecyclerView.setOnRefreshListener(new OnRefreshListener() {
             @Override
             public void onRefresh() {
-                pullRefreshRecyclerView.setLoadMoreEnable(false);
                 pageNum = 1;
-                adapter.setData(getDdata());
+                getDdata(true);
 
-                pullRefreshRecyclerView.refreshComplete();
-                pullRefreshRecyclerView.setLoadMoreEnable(true);
-                pageNum++;
             }
         });
 
@@ -56,22 +52,46 @@ public class MainActivity extends AppCompatActivity {
         pullRefreshRecyclerView.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
-                pullRefreshRecyclerView.setRefreshEnable(false);
-//                pullRefreshRecyclerView.setLoadMoreEnable(pageNum < 3);
-                adapter.addItems(getDdata());
-                pageNum += 1;
+//                pullRefreshRecyclerView.setRefreshEnable(false);
+//                pullRefreshRecyclerView.setCanLoadMore(pageNum < 3);
+                getDdata(false);
 
-                pullRefreshRecyclerView.onLoadMoreCompleted(true,true);
 //                pullRefreshRecyclerView.setRefreshEnable(true);
             }
         });
     }
 
-    private List<String> getDdata() {
-        List<String> l = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            l.add(pageNum + " pos " + i);
-        }
-        return l;
+    private void getDdata(final boolean refresh) {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(5000);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            List<String> l = new ArrayList<>();
+                            for (int i = 0; i < 5; i++) {
+                                l.add(pageNum + " pos " + i);
+                            }
+                            if (refresh) {
+                                adapter.setData(l);
+                                pullRefreshRecyclerView.refreshComplete();
+
+                            } else {
+                                adapter.addItems(l);
+                                pullRefreshRecyclerView.onLoadMoreCompleted(true, true);
+                            }
+                            pageNum++;
+                        }
+                    });
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
     }
 }
