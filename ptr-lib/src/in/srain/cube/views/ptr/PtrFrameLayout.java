@@ -670,6 +670,17 @@ public class PtrFrameLayout extends ViewGroup {
 
     public void setCanPullToRefresh(boolean canPullToRefresh) {
         this.canPullToRefresh = canPullToRefresh;
+        setHeaderVisibility();
+    }
+
+    private void setHeaderVisibility() {
+        if (mHeaderView != null) {
+            mHeaderView.setVisibility(canPullToRefresh ? VISIBLE : INVISIBLE);
+        }
+    }
+
+    public boolean isCanPullToRefresh() {
+        return canPullToRefresh;
     }
 
     public void autoRefresh() {
@@ -686,9 +697,9 @@ public class PtrFrameLayout extends ViewGroup {
     }
 
     public void autoRefresh(boolean atOnce, int duration) {
-          if (!canPullToRefresh){
-              return;
-          }
+        if (!canPullToRefresh) {
+            return;
+        }
         if (mStatus != PTR_STATUS_INIT) {
             return;
         }

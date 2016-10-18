@@ -30,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void setView() {
         PtrLoadMoreLayout loadMoreLayout = pullRefreshRecyclerView.getPtrLayout();
-        loadMoreLayout.setLoadMoreStyle(Constant.LOAD_STYLE_OVER);
         RecyclerView recyclerView = pullRefreshRecyclerView.getRecyclerView();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -38,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
         adapter.setData(getDdata());
         recyclerView.setAdapter(adapter);
         pullRefreshRecyclerView.setLoadMoreType(Constant.LOAD_SHOW_BY_CONTENT);
-//        pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_NORMAL);
+        pullRefreshRecyclerView.setLoadMoreStyle(Constant.LOAD_STYLE_OVER);
 
         pullRefreshRecyclerView.setOnRefreshListener(new OnRefreshListener() {
             @Override
@@ -58,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLoadMore() {
                 pullRefreshRecyclerView.setRefreshEnable(false);
+//                pullRefreshRecyclerView.setLoadMoreEnable(pageNum < 3);
                 adapter.addItems(getDdata());
                 pageNum += 1;
 

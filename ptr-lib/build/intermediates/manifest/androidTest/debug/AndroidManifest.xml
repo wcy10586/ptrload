@@ -3,7 +3,7 @@
     package="in.srain.cube.views.ptr.test" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="14"
         android:targetSdkVersion="24" />
 
     <instrumentation
