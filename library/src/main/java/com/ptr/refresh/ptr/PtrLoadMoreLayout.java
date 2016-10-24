@@ -3,6 +3,7 @@ package com.ptr.refresh.ptr;
 import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -65,6 +66,8 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
     private OverScroller flingScroller;
     private OverScrollRunnable overScrollRunnable;
 
+    private boolean isSuperInRefresh;
+
     public PtrLoadMoreLayout(Context context) {
         super(context);
         init();
@@ -103,6 +106,9 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (isSuperInRefresh) {
+            return super.dispatchTouchEvent(ev);
+        }
         detector.onTouchEvent(ev);
         int action = ev.getAction() & MotionEvent.ACTION_MASK;
         switch (action) {
@@ -126,9 +132,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
                 break;
             case MotionEvent.ACTION_MOVE:
                 isMoving = true;
-//                if (isLoading || TOP_OFFSET == mStatus) {
-//                    return super.dispatchTouchEvent(ev);
-//                }
                 if (uiHandler == null) {
                     return super.dispatchTouchEvent(ev);
                 }
@@ -304,6 +307,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
         if (isOverScrollTop) {
             return true;
         }
+
         float dealtY = oldY - currentY;
         return dealtY < 0 && !canChildScrollUp();
     }
@@ -342,6 +346,12 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
     }
 
     @Override
+    protected void onPositionChange(boolean isInTouching, byte status, PtrIndicator mPtrIndicator) {
+        super.onPositionChange(isInTouching, status, mPtrIndicator);
+        isSuperInRefresh = mPtrIndicator.getCurrentPosY() > PtrIndicator.POS_START;
+    }
+
+    @Override
     public boolean checkCanDoRefresh(PtrFrameLayout ptrFrameLayout, View view, View view1) {
         return !ViewCompat.canScrollVertically(scrollableView, -1);
     }
@@ -364,6 +374,11 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
         loadStatus = LOAD_STATUS_NORMAL;
         isLoading = false;
         super.setCanPullToRefresh(true && canPullToRefresh);
+        if (loadMoreStyle == Constant.LOAD_STYLE_NORMAL) {
+            dealtY = 0;
+            oldY = 0;
+            mSmoothScrollTo(0, 0);
+        }
     }
 
     public void setLoadMoreUiHandler(ILoadMoreUIHandler uiHandler) {

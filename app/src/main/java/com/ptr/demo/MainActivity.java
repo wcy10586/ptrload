@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         pullRefreshRecyclerView = (PullRefreshRecyclerView) findViewById(R.id.ptr_layout);
-//        pullRefreshRecyclerView.setRefreshEnable(false);
+        pullRefreshRecyclerView.setRefreshEnable(false);
         setView();
     }
 
