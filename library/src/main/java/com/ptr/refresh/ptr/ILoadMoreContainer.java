@@ -12,6 +12,6 @@ public interface ILoadMoreContainer {
 
     void setOnLoadMoreListener(OnLoadMoreListener listener);
 
-    void onLoadMoreCompleted(boolean success, boolean hasMore);
+    void setLoadMoreCompleted(boolean success, boolean hasMore);
 
 }

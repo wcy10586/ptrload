@@ -125,8 +125,6 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     @Override
     public boolean onPrepare() {
         //在最后一个item显示的时候即为prepare
-        int a = RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView);
-        int b = recyclerView.getAdapter().getItemCount() - 2;
         return RecyclerViewUtils.getLastCompletelyVisibleItemPos(recyclerView) >= recyclerView.getAdapter().getItemCount() - 2;
     }
 
@@ -137,15 +135,15 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
     }
 
     @Override
-    public void onLoadMoreCompleted(boolean success, boolean hasMore) {
+    public void setLoadMoreCompleted(boolean success, boolean hasMore) {
         if (uiHandler != null) {
             uiHandler.onLoadFinish(success, hasMore);
         }
         ptrLayout.loadComplete();
     }
 
-    public void refreshComplete() {
-        ptrLayout.refreshComplete();
+    public void setRefreshComplete() {
+        ptrLayout.setRefreshComplete();
     }
 
     public void setDefaultHeaderLastUpdateTimeKey(String key) {
@@ -186,15 +184,15 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
         }
     }
 
-    public boolean isCanLoadMore(){
+    public boolean isCanLoadMore() {
         return ptrLayout.isCanLoadMore();
     }
 
     public void setCanPullToRefresh(boolean canPullToRefresh) {
-       ptrLayout.setCanPullToRefresh(canPullToRefresh);
+        ptrLayout.setCanPullToRefresh(canPullToRefresh);
     }
 
-    public boolean isCanPullToRefresh(){
+    public boolean isCanPullToRefresh() {
         return ptrLayout.isCanPullToRefresh();
     }
 
@@ -211,10 +209,6 @@ public class PullRefreshRecyclerView extends FrameLayout implements ILoadMoreCon
 
     public void hideEmptyView() {
         emptyContainer.setVisibility(GONE);
-    }
-
-    public void setRefreshEnable(boolean enable) {
-        ptrLayout.setCanPullToRefresh(enable);
     }
 
     public FooterRecyclerView getRecyclerView() {

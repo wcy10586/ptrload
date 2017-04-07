@@ -172,7 +172,7 @@ public class DefaultPullRefreshHeader extends FrameLayout implements PtrUIHandle
 
     private String getLastUpdateTime() {
         if (this.mLastUpdateTime == -1L && !TextUtils.isEmpty(this.mLastUpdateTimeKey)) {
-            this.mLastUpdateTime = this.getContext().getSharedPreferences("cube_ptr_classic_last_update", 0).getLong(this.mLastUpdateTimeKey, -1L);
+            this.mLastUpdateTime = this.getContext().getSharedPreferences(KEY_SharedPreferences, 0).getLong(this.mLastUpdateTimeKey, -1L);
         }
 
         if (this.mLastUpdateTime == -1L) {

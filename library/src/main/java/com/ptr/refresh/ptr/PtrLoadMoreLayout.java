@@ -31,6 +31,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
 
 
     private boolean isLoading;
+    private boolean superCanPullRefresh = true;
     private boolean canPullToRefresh = true;
     private boolean canLoadMore = true;
     private boolean loadMoreEnable = true;
@@ -44,12 +45,15 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
 
     private boolean shouldSetScrollerStart;
 
+    private float oldX;
     private float oldY;
     private int dealtY;
     private Scroller mScroller;
     private float baseOverScrollLength;
 
     private boolean isMoving;
+    private boolean isHorizontalMove;
+    private boolean isVerticalMove;
 
     private View scrollableView;
 
@@ -65,8 +69,8 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
     private FlingRunnable flingRunnable;
     private OverScroller flingScroller;
     private OverScrollRunnable overScrollRunnable;
-
-    private boolean isSuperInRefresh;
+    private boolean topOverScrollEnable = true;
+    private boolean bottomOverscrollEnable = true;
 
     public PtrLoadMoreLayout(Context context) {
         super(context);
@@ -96,7 +100,9 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
                 if (isOverScrollTop || isOverScrollBottom) {
                     return false;
                 }
-                flingRunnable.start(velocityX, velocityY);
+                if (isVerticalMove) {
+                    flingRunnable.start(velocityX, velocityY);
+                }
                 return false;
             }
         });
@@ -106,19 +112,20 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (isSuperInRefresh) {
-            return super.dispatchTouchEvent(ev);
-        }
         detector.onTouchEvent(ev);
         int action = ev.getAction() & MotionEvent.ACTION_MASK;
         switch (action) {
             case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_POINTER_UP:
                 oldY = 0;
+                oldX = 0;
                 break;
             case MotionEvent.ACTION_DOWN:
                 isMoving = false;
+                isHorizontalMove = false;
+                isVerticalMove = false;
                 oldY = 0;
+                oldX = 0;
                 dealtY = mScroller.getCurrY();
                 if (dealtY != 0) {
                     shouldSetScrollerStart = true;
@@ -131,7 +138,17 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
+                if (!isHorizontalMove && !isVerticalMove) {
+                    checkMove(ev.getX(), ev.getY());
+                    return super.dispatchTouchEvent(ev);
+                }
+                if (isHorizontalMove) {
+                    return super.dispatchTouchEvent(ev);
+                }
                 isMoving = true;
+//                if (isLoading || TOP_OFFSET == mStatus) {
+//                    return super.dispatchTouchEvent(ev);
+//                }
                 if (uiHandler == null) {
                     return super.dispatchTouchEvent(ev);
                 }
@@ -278,7 +295,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
 
     private void loadMore() {
         if (loadMoreListener != null) {
-            super.setCanPullToRefresh(false);
+            setSuperCanPullRefresh(false);
             loadStatus = LOAD_STATUS_LOADING;
             isLoading = true;
             uiHandler.onLoading();
@@ -300,20 +317,57 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
 
 
     private boolean isTopOverScroll(float currentY) {
-        if (getHeaderView() != null && super.isCanPullToRefresh()) {
+        if (!topOverScrollEnable) {
+            return false;
+        }
+        if (getHeaderView() != null && superCanPullRefresh) {
             return false;
         }
 
         if (isOverScrollTop) {
             return true;
         }
-
         float dealtY = oldY - currentY;
         return dealtY < 0 && !canChildScrollUp();
     }
 
+    private void setSuperCanPullRefresh(boolean canPullToRefresh) {
+        superCanPullRefresh = canPullToRefresh;
+        super.setCanPullToRefresh(canPullToRefresh);
+        setHeaderVisibility();
+    }
+
+    private void setHeaderVisibility() {
+        setHeaderVisibility(superCanPullRefresh ? VISIBLE : INVISIBLE);
+    }
+
+    private void setHeaderVisibility(int visibility) {
+        if (getHeaderView() != null) {
+            getHeaderView().setVisibility(visibility);
+        }
+    }
+
+    private void checkMove(float x, float y) {
+        if (oldX == 0 || oldY == 0) {
+            oldX = x;
+            oldY = y;
+            return;
+        }
+        int dealtX = (int) (x - oldX);
+        int dealtY = (int) (y - oldY);
+        if (Math.abs(dealtX) > Math.abs(dealtY)) {
+            isHorizontalMove = true;
+        }
+        if (Math.abs(dealtY) > Math.abs(dealtX)) {
+            isVerticalMove = true;
+            oldY = y;
+        }
+    }
 
     private boolean isBottomOverScroll(float currentY) {
+        if (!bottomOverscrollEnable) {
+            return false;
+        }
         if (isOverScrollBottom) {
             return true;
         }
@@ -348,7 +402,6 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
     @Override
     protected void onPositionChange(boolean isInTouching, byte status, PtrIndicator mPtrIndicator) {
         super.onPositionChange(isInTouching, status, mPtrIndicator);
-        isSuperInRefresh = mPtrIndicator.getCurrentPosY() > PtrIndicator.POS_START;
     }
 
     @Override
@@ -364,8 +417,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
         }
     }
 
-    @Override
-    public void refreshComplete() {
+    public void setRefreshComplete() {
         super.refreshComplete();
         loadMoreEnable = true && canLoadMore;
     }
@@ -373,7 +425,7 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
     public void loadComplete() {
         loadStatus = LOAD_STATUS_NORMAL;
         isLoading = false;
-        super.setCanPullToRefresh(true && canPullToRefresh);
+        setSuperCanPullRefresh(true && canPullToRefresh);
         if (loadMoreStyle == Constant.LOAD_STYLE_NORMAL) {
             dealtY = 0;
             oldY = 0;
@@ -395,11 +447,10 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
     @Override
     public void setCanPullToRefresh(boolean canPullToRefresh) {
         this.canPullToRefresh = canPullToRefresh;
-        super.setCanPullToRefresh(canPullToRefresh && super.isCanPullToRefresh());
+        setSuperCanPullRefresh(canPullToRefresh && superCanPullRefresh);
 
     }
 
-    @Override
     public boolean isCanPullToRefresh() {
         return canPullToRefresh;
     }
@@ -460,6 +511,21 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
         }
     }
 
+    public boolean isTopOverScrollEnable() {
+        return topOverScrollEnable;
+    }
+
+    public void setTopOverScrollEnable(boolean topOverScrollEnable) {
+        this.topOverScrollEnable = topOverScrollEnable;
+    }
+
+    public boolean isBottomOverscrollEnable() {
+        return bottomOverscrollEnable;
+    }
+
+    public void setBottomOverscrollEnable(boolean bottomOverscrollEnable) {
+        this.bottomOverscrollEnable = bottomOverscrollEnable;
+    }
 
     private class OverScrollRunnable implements Runnable {
 
@@ -498,9 +564,13 @@ public class PtrLoadMoreLayout extends PtrFrameLayout implements PtrHandler, Vie
     private void startOverScrollAim(float currVelocity) {
         float speed = currVelocity / configuration.getScaledMaximumFlingVelocity() + 0.5f;
         if (!canChildScrollUp()) {
-            overScrollRunnable.start(0, -speed);
+            if (topOverScrollEnable) {
+                overScrollRunnable.start(0, -speed);
+            }
         } else {
-            overScrollRunnable.start(0, speed);
+            if (bottomOverscrollEnable) {
+                overScrollRunnable.start(0, speed);
+            }
         }
     }
 
